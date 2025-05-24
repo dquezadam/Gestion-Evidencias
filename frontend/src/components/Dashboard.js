@@ -45,12 +45,12 @@ const Dashboard = () => {
             <Grid item xs={12} md={6}>
               <Button
                 component={Link}
-                to="/evidencias-pendientes"
+                to="/revisar-reclamos"
                 variant="contained"
                 color="primary"
                 fullWidth
               >
-                Revisar Evidencias
+                Revisar Reclamos
               </Button>
             </Grid>
             <Grid item xs={12} md={6}>

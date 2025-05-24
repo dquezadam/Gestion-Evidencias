@@ -1,42 +1,50 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import axios from 'axios';
-import { Button, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Button, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 
 const GenerarCobro = () => {
-  const [evidenciasAprobadas, setEvidenciasAprobadas] = useState([]);
+  const [reclamosResueltos, setReclamosResueltos] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, reclamoId: null });
   const { user } = useContext(AuthContext);
 
-useEffect(() => {
-  const fetchEvidenciasAprobadas = async () => {
+  useEffect(() => {
+    const fetchReclamosResueltos = async () => {
+      try {
+        const response = await axios.get('/api/reclamos/');
+        setReclamosResueltos(response.data.filter(r => r.resuelto));
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchReclamosResueltos();
+  }, []);
+
+  const handleGenerarCobro = async (reclamoId) => {
     try {
-      const response = await axios.get('http://localhost:8000/api/evidencias/?estado=APROB');
-      setEvidenciasAprobadas(response.data);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-  fetchEvidenciasAprobadas();
-}, []);
-
-  const handleGenerarCobro = async (evidenciaId) => {
-  try {
-    const response = await axios.get(  // <-- Cambiar a GET
-      `/api/cobros/generar-cobro/${evidenciaId}/`,
-      { responseType: 'blob' }
-    );
-
-      // Crear enlace temporal para descargar el PDF
+      const response = await axios.get(
+        `/api/cobros/generar-cobro/${reclamoId}/`,
+        { responseType: 'blob' }
+      );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `cobro_${evidenciaId}.pdf`);
+      link.setAttribute('download', `cobro_${reclamoId}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
       console.error('Error al generar cobro:', error);
       alert('No se pudo generar el cobro');
+    }
+  };
+
+  const handleEliminarReclamo = async (reclamoId) => {
+    try {
+      await axios.delete(`/api/reclamos/${reclamoId}/`);
+      setReclamosResueltos(reclamosResueltos.filter(r => r.id !== reclamoId));
+    } catch (error) {
+      alert('Error al eliminar el reclamo');
     }
   };
 
@@ -47,23 +55,32 @@ useEffect(() => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>ID Reclamo</TableCell>
+              <TableCell>Usuario</TableCell>
               <TableCell>Producto</TableCell>
-              <TableCell>Monto</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {evidenciasAprobadas.map((evidencia) => (
-              <TableRow key={evidencia.id}>
-                <TableCell>{evidencia.producto?.nombre || 'N/A'}</TableCell>
-                <TableCell>${evidencia.producto?.precio_unitario || 0}</TableCell>
+            {reclamosResueltos.map((reclamo) => (
+              <TableRow key={reclamo.id}>
+                <TableCell>{reclamo.id}</TableCell>
+                <TableCell>{reclamo.usuario?.username || reclamo.usuario}</TableCell>
+                <TableCell>{reclamo.producto?.nombre || reclamo.producto}</TableCell>
                 <TableCell>
                   <Button 
                     variant="contained" 
                     color="primary"
-                    onClick={() => handleGenerarCobro(evidencia.id)}
+                    onClick={() => handleGenerarCobro(reclamo.evidencia || (reclamo.evidencia_obj && reclamo.evidencia_obj.id))}
                   >
                     Generar Cobro
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => setConfirmDialog({ open: true, reclamoId: reclamo.id })}
+                  >
+                    Eliminar
                   </Button>
                 </TableCell>
               </TableRow>
@@ -71,6 +88,22 @@ useEffect(() => {
           </TableBody>
         </Table>
       </TableContainer>
+      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, reclamoId: null })}>
+        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro que deseas eliminar este reclamo? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialog({ open: false, reclamoId: null })} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={() => { handleEliminarReclamo(confirmDialog.reclamoId); setConfirmDialog({ open: false, reclamoId: null }); }} color="error" autoFocus>
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

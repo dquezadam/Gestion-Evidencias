@@ -26,7 +26,7 @@ const Login = () => {
 
       // Redirigir según el rol
       if (response.data.tipo_usuario === 'OP_CD') {
-        navigate('/evidencias');
+        navigate('/lista-evidencias');
       } else {
         navigate('/dashboard');
       }
