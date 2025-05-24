@@ -100,6 +100,7 @@ DATABASES = {
 }
 
 CORS_ALLOWED_ORIGINS = [
+    "https://gestion-frontend.onrender.com",
     "http://localhost:3000",  # Dominio de React
 ]
 
