@@ -22,5 +22,8 @@ urlpatterns = [
     path('api/cobros/', include('cobros.urls')),  # Nueva app de cobros 
 ]
 
+# Sirve archivos estáticos en producción (Render los sirve automáticamente, pero esto ayuda en otros hostings)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
