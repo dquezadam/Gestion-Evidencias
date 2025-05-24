@@ -5,6 +5,8 @@ from usuarios.views import UsuarioViewSet
 from evidencias.views import ProductoViewSet, EvidenciaViewSet
 from reclamos.views import ReclamoViewSet
 from usuarios.views import CustomAuthToken
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet, basename='usuario')
@@ -19,3 +21,6 @@ urlpatterns = [
     path('api-token-auth/', CustomAuthToken.as_view()),  # Login
     path('api/cobros/', include('cobros.urls')),  # Nueva app de cobros 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

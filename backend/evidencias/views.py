@@ -18,3 +18,16 @@ class EvidenciaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]  # <-- Agregar
     filterset_fields = ['estado']  # <-- Permite filtrar por estado
+
+    def perform_create(self, serializer):
+        # Asigna automáticamente el usuario autenticado
+        serializer.save(usuario=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Evidencia.objects.all()
+        # Si es Operativo CD, solo ve sus evidencias
+        if user.tipo_usuario == 'OP_CD':
+            return queryset.filter(usuario=user)
+        # Si es Logística Clientes, ve todas
+        return queryset

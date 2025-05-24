@@ -9,6 +9,10 @@ class Producto(models.Model):
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
     
+def evidencia_upload_path(instance, filename):
+    # Guarda los archivos en una carpeta por producto y usuario
+    return f"evidencias/producto_{instance.producto.id}/usuario_{instance.usuario.id}/{filename}"
+
 class Evidencia(models.Model):
     ESTADOS = [
         ('PEND', 'Pendiente'),
@@ -18,7 +22,7 @@ class Evidencia(models.Model):
     
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.CASCADE)
-    archivo = models.FileField(upload_to='evidencias/')
+    archivo = models.FileField(upload_to=evidencia_upload_path)
     fecha_subida = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=6, choices=ESTADOS, default='PEND')
     observaciones = models.TextField(blank=True)

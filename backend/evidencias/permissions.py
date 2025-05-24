@@ -2,7 +2,6 @@ from rest_framework import permissions
 
 class EsLogisticaClientes(permissions.BasePermission):
     """
-    Permiso personalizado para verificar si el usuario es de Logística Clientes.
     """
     def has_permission(self, request, view):
         # Verifica si el usuario está autenticado y es de tipo LOG_CL

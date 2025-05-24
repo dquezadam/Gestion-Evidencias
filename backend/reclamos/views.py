@@ -3,6 +3,7 @@ from django.utils import timezone
 from .models import Reclamo
 from .serializers import ReclamoSerializer
 from evidencias.permissions import EsLogisticaClientes  # Importa desde evidencias o reclamos
+from evidencias.models import Evidencia
 
 class ReclamoViewSet(viewsets.ModelViewSet):
     serializer_class = ReclamoSerializer
@@ -21,12 +22,16 @@ class ReclamoViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        # Asigna automáticamente el usuario al crear
-        serializer.save(usuario=self.request.user)
+        evidencia = serializer.validated_data['evidencia']
+        serializer.save(usuario=self.request.user, producto=evidencia.producto)
 
     def perform_update(self, serializer):
-        # Si se marca como resuelto, añade la fecha actual
+        # Si se marca como resuelto, añade la fecha actual y aprueba la evidencia asociada
         if serializer.validated_data.get('resuelto', False):
-            serializer.save(resuelto=True, fecha_resolucion=timezone.now())
+            reclamo = serializer.save(resuelto=True, fecha_resolucion=timezone.now())
+            # Aprueba la evidencia asociada
+            evidencia = reclamo.evidencia
+            evidencia.estado = 'APROB'
+            evidencia.save()
         else:
             serializer.save()
